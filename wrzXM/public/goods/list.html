@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title></title>
+<link rel="stylesheet" type="text/css" href="../style/default.css"/>
+<link rel="stylesheet" type="text/css" href="../style/goods_list.css"/>
+</head>
+<body class="frameright">
+	<div>位置：后台 &gt; 商品中心 &gt; 列表</div>
+	<div class="search">
+		<li><input type="text" /></li>
+		<li><input type="button" value="搜索" /></li>	
+		<li>
+			<label>全选<input type="checkbox" id="cball" /></label>
+			<input type="button" value="批量删除" />
+		</li>	
+	</div>
+	<div>
+		<table>
+			<thead>
+				<tr>
+					<td>编号</td>
+					<td>商品名称</td>
+					<td>商品图片</td>
+					<td>商品单价</td>
+					<td>操作</td>
+				</tr>
+			</thead>
+			<tbody>
+			</tbody>
+			<tfoot>
+				<tr>
+					<td colspan="5"></td>
+				</tr>
+			</tfoot>
+		</table>
+	</div>
+	<div class="search right">
+		<input type="button" value="添加商品" />
+	</div>
+</body>
+</html>
+<script src="https://cdn.bootcss.com/jquery/1.12.4/jquery.min.js"></script>
+<script>
+	var page=1;
+	var maxPage;
+	var wd="";
+	function handle(){
+		$.get("/goods_list/"+page+"/10?wd="+wd,(result)=>{
+			var result=JSON.parse( result)
+			maxPage=result.maxPage;
+			var arr=result.data;
+			var tbody=$("tbody");
+			var tfoot=$("tfoot td");
+			tbody.html("");
+			console.log(result.maxPage);
+			arr.forEach(function(obj){
+				tbody.append(`
+					<tr class='goodstr'>
+					<td data-pid='${obj._id}'><input type="checkbox">${obj._id}</td>
+					
+					<td>${obj.name}</td>
+					<td class='goodstd'>${obj.content}</td>
+					<td>${obj.price}</td>
+					<td>
+					    <a>详情</a>
+						<a>修改</a>
+						<a>删除</a>
+					</td>
+				</tr>
+					`);
+			})
+			
+			//分页的功能
+			tfoot.html(`
+				${page+"/"+maxPage}
+				<input type="button" value="首页">
+				<input type="button" value="上一页">
+				<input type="button" value="下一页">
+				<input type="button" value="末页">
+				`);
+		})
+	}
+	handle();
+	//实现分页功能
+	var tfoot=$("tfoot td");
+	tfoot.on("click","input",function(e){
+		e.stopPropagation();
+		switch(e.target.value){
+			case "首页":
+				page=1;
+				break;
+			case "上一页":
+				page--;
+				if(page<1){
+					page=1;
+				}
+				break;
+			case "下一页":
+				page++;
+				if(page>maxPage){
+					page=maxPage;
+				}
+				break;
+			case "末页":
+				page=maxPage;
+				break;
+		}
+		handle();
+	})
+	//单独删除某一行
+	$("tbody").on("click","a",function(e){
+		
+		if($(this).html()=="删除"){
+			//向后端发起数据请求 在数据库中删除数据
+			var parent=$(this).parent().parent();
+			var gid=parent.children().first().data("pid")
+			var bln=confirm("确定要删除吗");
+			if(bln){
+				$.post("/goods_del",{"gid":gid},function(result){
+					parent.remove();
+					console.log(result)
+			    })
+				
+			}
+			console.log(gid);
+		}else if($(this).html()=="修改"){
+			var parent=$(this).parent().parent();
+			var gid=parent.children().first().data("pid")
+			location.href="goods_update.html?gid="+gid;
+		}
+	})
+	//全选操作
+	$("#cball").click(function(e){
+	    $("tbody td input[type=checkbox]").prop("checked",$(this).prop("checked"));	
+	})
+	//只要有一个复选框没被选中 全选取消
+	$("tbody").on("click","input",function(e){
+		if(!$(this).prop("checked")){
+			$("#cball").prop("checked",false);
+		}
+	})
+	//批量删除	
+	$("input[value='批量删除']").click(function(){
+		//map 如果返回多个值 是个伪数组
+	    var str=Array.from( $("td input:checked").map(function(ind,el){
+		      return el.parentNode.getAttribute("data-pid");
+	      })).join(",")
+	    	
+	    console.log( str);
+		$.post("/goods_delp",{"ids":str},function(result){
+			$("tr:has(input:checked)").remove();
+		})
+		
+	})
+	//搜索功能
+	$("input[value='搜索']").click(function(e){
+		wd=$(".search input[type='text']").val();
+		console.log(wd)
+		handle();
+	})
+</script>

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<style type="text/css">
+			.goodsImg{
+				width:100px ;
+				height: 100px;
+			}
+			.goodsImg img{
+				width: 100%;
+				height: 100%;
+			}
+			#editor{
+				width: 700px;
+				height: 350px;
+			}
+		</style>
+	</head>
+	<body>
+		<form>
+		<label>商品名称：</label><input id="name" type="text" /><br />
+		商品图片:<div class="goodsImg"></div>
+		<h6>修改商品图片</h6>
+		<div id="editor"></div>
+		<label>商品单价：</label><input id="price" type="text"/><br />
+		<input type="button" value="修改商品" id="obtn"/>
+		</form>
+		
+	</body>
+</html>
+<script src="https://cdn.bootcss.com/jquery/1.12.4/jquery.min.js"></script>
+<script src="https://cdn.bootcss.com/wangEditor/10.0.13/wangEditor.min.js"></script>
+<script>
+	//创建文本编辑器
+	var E = window.wangEditor;
+    var editor = new E('#editor');
+    editor.customConfig.uploadImgServer = '/goods_upload';
+    editor.customConfig.uploadFileName = 'img';
+    editor.create();
+    var imgContent="";
+    var id="";
+    $.get("/goods_info"+location.search,function(result){
+    	console.log(result);
+    	$("#name").val( result[0].name);
+    	$("#price").val( result[0].price);
+    	$(".goodsImg").html(result[0].content );
+    	imgContent=result[0].content;
+    	id=result[0]._id;
+    },"json");
+    //发起修改请求
+    $("#obtn").on("click",function(){
+    	
+    	//组织冒泡排序
+    	//e.preventDefault();
+    	var fd=new FormData();
+    	fd.append("gname",$("#name").val());
+    	fd.append("gprice",$("#price").val());
+    	fd.append("gcontent",editor.txt.html());
+    	fd.append("gdelImg",imgContent);
+    	fd.append("gid",id);
+    		
+       
+        
+        console.log(fd);
+        $.ajax({
+        	url:"/goods_update",
+    		data:fd,
+    		type:"post",
+    		async:true,
+        	success:function(result){
+        		console.log(result);
+        	},
+        	contentType:false,
+    		processData:false
+        });
+    })
+</script>

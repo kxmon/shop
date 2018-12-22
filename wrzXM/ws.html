@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+	</head>
+	<body>
+	</body>
+</html>
+<script>
+	var str="wwwww你好戏www";
+	function num(str){
+		var num1=str.length;
+		var num2=0;
+		for (var i=0;i<str.length;i++) {
+			if (str.charCodeAt(i)>=10000) {
+				num2++;
+			}
+		}
+		console.log(num1);
+		console.log(num2)
+	}
+	num(str);
+</script>
